@@ -1,0 +1,10 @@
+# Render deployment config for Mood Music Recommender
+services:
+  - type: web
+    name: mood-music-recommender
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
