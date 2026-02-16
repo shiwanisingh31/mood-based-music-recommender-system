@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trending Artists - Mood Music Recommender</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .loading {
+            text-align: center;
+            color: white;
+            font-size: 1.2rem;
+            padding: 40px;
+        }
+
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .artists-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 25px;
+            margin-top: 30px;
+        }
+
+        .artist-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s, box-shadow 0.3s;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .artist-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .artist-image {
+            width: 100%;
+            height: 250px;
+            object-fit: cover;
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
+
+        .artist-rank {
+            position: absolute;
+            top: 30px;
+            left: 30px;
+            background: rgba(255, 255, 255, 0.95);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.2rem;
+            color: #667eea;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .artist-name {
+            font-size: 1.4rem;
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #333;
+        }
+
+        .artist-stats {
+            display: flex;
+            justify-content: space-between;
+            margin: 10px 0;
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .stat {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .genres {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .genre-tag {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+        }
+
+        .spotify-link {
+            display: inline-block;
+            margin-top: 15px;
+            padding: 10px 20px;
+            background: #1DB954;
+            color: white;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+
+        .spotify-link:hover {
+            background: #1ed760;
+        }
+
+        .back-button {
+            display: inline-block;
+            padding: 12px 30px;
+            background: white;
+            color: #667eea;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: bold;
+            margin-bottom: 30px;
+            transition: transform 0.3s, box-shadow 0.3s;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .back-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .error-message {
+            background: #ff4444;
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        /* Modal for artist details */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .close-modal {
+            float: right;
+            font-size: 2rem;
+            cursor: pointer;
+            color: #666;
+        }
+
+        .track-list {
+            margin-top: 20px;
+        }
+
+        .track-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .track-image {
+            width: 60px;
+            height: 60px;
+            border-radius: 5px;
+        }
+
+        .track-info {
+            flex: 1;
+        }
+
+        .track-name {
+            font-weight: bold;
+            margin-bottom: 3px;
+        }
+
+        .track-album {
+            font-size: 0.9rem;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/" class="back-button">← Back to Mood Recommender</a>
+        
+        <header>
+            <h1>🎵 Trending Artists</h1>
+            <p class="subtitle">Discover what's hot right now</p>
+        </header>
+
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+            <p>Loading trending artists...</p>
+        </div>
+
+        <div id="error" style="display: none;"></div>
+
+        <div id="artists-container" class="artists-grid"></div>
+    </div>
+
+    <!-- Modal for artist top tracks -->
+    <div id="artist-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeModal()">&times;</span>
+            <h2 id="modal-artist-name"></h2>
+            <div id="modal-tracks" class="track-list"></div>
+        </div>
+    </div>
+
+    <script>
+        // Fetch and display trending artists
+        async function loadTrendingArtists() {
+            try {
+                const response = await fetch('/api/trending-artists');
+                const data = await response.json();
+
+                document.getElementById('loading').style.display = 'none';
+
+                if (data.success) {
+                    displayArtists(data.artists);
+                } else {
+                    showError('Failed to load artists: ' + data.error);
+                }
+            } catch (error) {
+                document.getElementById('loading').style.display = 'none';
+                showError('Error connecting to server: ' + error.message);
+            }
+        }
+
+        function displayArtists(artists) {
+            const container = document.getElementById('artists-container');
+            container.innerHTML = '';
+
+            artists.forEach((artist, index) => {
+                const card = document.createElement('div');
+                card.className = 'artist-card';
+                card.onclick = () => showArtistTracks(artist.id, artist.name);
+
+                card.innerHTML = `
+                    <div class="artist-rank">${index + 1}</div>
+                    <img src="${artist.image || 'https://via.placeholder.com/250'}" 
+                         alt="${artist.name}" 
+                         class="artist-image">
+                    <div class="artist-name">${artist.name}</div>
+                    <div class="artist-stats">
+                        <div class="stat">
+                            <span>🔥</span>
+                            <span>${artist.popularity}/100</span>
+                        </div>
+                        <div class="stat">
+                            <span>👥</span>
+                            <span>${formatFollowers(artist.followers)}</span>
+                        </div>
+                    </div>
+                    <div class="genres">
+                        ${artist.genres.map(genre => 
+                            `<span class="genre-tag">${genre}</span>`
+                        ).join('')}
+                    </div>
+                    <a href="${artist.spotify_url}" 
+                       target="_blank" 
+                       class="spotify-link"
+                       onclick="event.stopPropagation()">
+                        Open in Spotify
+                    </a>
+                `;
+
+                container.appendChild(card);
+            });
+        }
+
+        function formatFollowers(num) {
+            if (num >= 1000000) {
+                return (num / 1000000).toFixed(1) + 'M';
+            } else if (num >= 1000) {
+                return (num / 1000).toFixed(1) + 'K';
+            }
+            return num.toString();
+        }
+
+        async function showArtistTracks(artistId, artistName) {
+            const modal = document.getElementById('artist-modal');
+            const modalName = document.getElementById('modal-artist-name');
+            const modalTracks = document.getElementById('modal-tracks');
+
+            modalName.textContent = `Top Tracks - ${artistName}`;
+            modalTracks.innerHTML = '<p>Loading tracks...</p>';
+            modal.classList.add('active');
+
+            try {
+                const response = await fetch(`/api/artist/${artistId}/top-tracks`);
+                const data = await response.json();
+
+                if (data.success) {
+                    modalTracks.innerHTML = data.tracks.map(track => `
+                        <div class="track-item">
+                            <img src="${track.album_image || 'https://via.placeholder.com/60'}" 
+                                 alt="${track.name}" 
+                                 class="track-image">
+                            <div class="track-info">
+                                <div class="track-name">${track.name}</div>
+                                <div class="track-album">${track.album}</div>
+                            </div>
+                            <a href="${track.spotify_url}" 
+                               target="_blank" 
+                               class="spotify-link"
+                               style="margin: 0; padding: 8px 15px; font-size: 0.9rem;">
+                                Play
+                            </a>
+                        </div>
+                    `).join('');
+                } else {
+                    modalTracks.innerHTML = '<p>Failed to load tracks</p>';
+                }
+            } catch (error) {
+                modalTracks.innerHTML = `<p>Error: ${error.message}</p>`;
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('artist-modal').classList.remove('active');
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.className = 'error-message';
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+        }
+
+        // Load artists when page loads
+        window.onload = loadTrendingArtists;
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('artist-modal');
+            if (event.target === modal) {
+                closeModal();
+            }
+        }
+    </script>
+</body>
+</html>

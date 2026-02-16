@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Your Songs</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    
+    <!-- FLOATING EMOJIS BACKGROUND -->
+    <div class="floating-emojis">
+        <div class="emoji-float">🎵</div>
+        <div class="emoji-float">😊</div>
+        <div class="emoji-float">🎧</div>
+        <div class="emoji-float">🤍</div>
+
+        <div class="emoji-float">🎶</div>
+        <div class="emoji-float">😢</div>
+        <div class="emoji-float">❤️</div>
+        <div class="emoji-float">😠</div>
+        <div class="emoji-float">🎵</div>
+        <div class="emoji-float">🎤</div>
+
+    </div>
+
+    <div class="container">
+        <div class="emoji">
+            {% if mood == "happy" %}
+                😊
+            {% elif mood == "sad" %}
+                😢
+            {% elif mood == "angry" %}
+                😠
+            {% else %}
+                🤔
+            {% endif %}
+        </div>
+        <h2>You're feeling: {{ mood }}</h2>
+        <h3>🎶 Recommended Songs</h3>
+        <ul class="song-list">
+            {% for song in songs %}
+            <li>🎵 {{ song }}</li>
+            {% endfor %}
+        </ul>
+        <a href="/" class="back-link">← Try Another Mood</a>
+    </div>
+</body>
+</html>
