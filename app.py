@@ -33,7 +33,7 @@ app = Flask(
 )
 
 # ==================== CONFIGURATION ====================
-app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "dev-secret-key-change-me")
+app.config["SECRET_KEY"] = "mysupersecretkey123mood2026!@#"
 app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get(
     "DATABASE_URL", "sqlite:///mood_music.db"
 )
