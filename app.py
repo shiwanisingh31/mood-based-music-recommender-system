@@ -813,7 +813,9 @@ def init_db():
         db.create_all()
         print("✅ Database initialized successfully!")
 
-init_db()
+with app.app_context():
+    db.create_all()
+    print("✅ Database initialized!")
 threading.Thread(target=_preload_deepface, daemon=True).start()
 
 
