@@ -14,7 +14,6 @@ from datetime import datetime
 import os
 import random
 import threading
-from sqlalchemy import inspect, text
 
 
 def _get_folder(name_options):
@@ -40,6 +39,7 @@ app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get(
 )
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
+# Music upload config
 UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), "music_uploads")
 ALLOWED_EXTENSIONS = {"mp3", "wav", "ogg", "m4a", "flac"}
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
@@ -47,6 +47,7 @@ app.config["MAX_CONTENT_LENGTH"] = 50 * 1024 * 1024  # 50MB max per file
 
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
+# Default songs config
 DEFAULT_SONGS_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), "default_songs")
 os.makedirs(DEFAULT_SONGS_FOLDER, exist_ok=True)
 
@@ -54,53 +55,76 @@ DEFAULT_SONGS = [
     {"filename": "1_1772524189_ZHU_-_In_the_Morning_mp3.pm.mp3", "title": "ZHU In The Morning"},
     {"filename": "1_1772524566_Kishore_Kumar_Lata_Mangeshkar_-_Oh_Saathi_Re_mp3.pm.mp3", "title": "Kishore Kumar Oh Saathi Re"},
     {"filename": "1_1772524580_Imagine_Dragons_-_Radioactive_Piano_mp3.pm.mp3", "title": "Imagine Dragons Radioactive"},
-    {"filename": "neutral_Gehra_Hua.mp3", "title": "Gehra Hua — Irshad Kamil"},
-    {"filename": "neutral_I_Really_Do.mp3", "title": "I Really Do — Karan Aujla"},
-    {"filename": "neutral_Pal_Pal.mp3", "title": "Pal Pal — Afusic"},
-    {"filename": "neutral_new_1.mp3", "title": "Let Me Down Slowly — Alec Benjamin"},
-    {"filename": "neutral_new_2.mp3", "title": "Chhalakata Hamro Jawaniya — Priyanka Singh"},
-    {"filename": "neutral_new_3.mp3", "title": "Phurr — Yo Yo Honey Singh"},
-    {"filename": "neutral_new_4.mp3", "title": "Mitha Bolke — Nirvair Pannu"},
-    {"filename": "neutral_new_5.mp3", "title": "Haseen — Talwiinder"},
-    {"filename": "neutral_new_6.mp3", "title": "Saiyaara — Faheem Abdullah"},
-    {"filename": "neutral_new_7.mp3", "title": "Barbaad — The Rish"},
-    {"filename": "neutral_new_8.mp3", "title": "Payal — Yo Yo Honey Singh"},
-    {"filename": "neutral_new_9.mp3", "title": "Saara India — Payal Dev"},
-    {"filename": "neutral_new_10.mp3", "title": "Raanjhan — Sachet Parampara"},
-    {"filename": "neutral_new_11.mp3", "title": "Zaalim — Badshah"},
-    {"filename": "neutral_new_12.mp3", "title": "Tera Ban Jaunga — Dj Yogi"},
-    {"filename": "neutral_new_13.mp3", "title": "Paint The Town Red — Doja Cat"},
-    {"filename": "neutral_new_14.mp3", "title": "EMPIRE — Ogryzek"},
-    {"filename": "neutral_new_15.mp3", "title": "Bahon Mein Chale Aao"},
-    {"filename": "neutral_new_16.mp3", "title": "Agar Tum Saath Ho — Tamasha"},
-    {"filename": "neutral_new_17.mp3", "title": "Ab Mujhe Raat Din"},
 ]
+# ==================== CATALOG SONGS ====================
+CATALOG_SONGS = [
+    {"title": "Aaj Ki Raat", "artist": "A.R. Rahman", "filename": None},
+    {"title": "Ae Dil Hai Mushkil", "artist": "Arijit Singh", "filename": None},
+    {"title": "All of Me", "artist": "John Legend", "filename": None},
+    {"title": "Baar Baar Dekho", "artist": "Sidharth Malhotra", "filename": None},
+    {"title": "Believer", "artist": "Imagine Dragons", "filename": None},
+    {"title": "Blinding Lights", "artist": "The Weeknd", "filename": None},
+    {"title": "Channa Mereya", "artist": "Arijit Singh", "filename": None},
+    {"title": "Closer", "artist": "The Chainsmokers", "filename": None},
+    {"title": "Can't Stop the Feeling", "artist": "Justin Timberlake", "filename": None},
+    {"title": "Dil Dhadakne Do", "artist": "Farhan Akhtar", "filename": None},
+    {"title": "Dance Monkey", "artist": "Tones and I", "filename": None},
+    {"title": "Dynamite", "artist": "BTS", "filename": None},
+    {"title": "Enna Sona", "artist": "A.R. Rahman", "filename": None},
+    {"title": "Fix You", "artist": "Coldplay", "filename": None},
+    {"title": "Galway Girl", "artist": "Ed Sheeran", "filename": None},
+    {"title": "Gerua", "artist": "Arijit Singh", "filename": None},
+    {"title": "Happy", "artist": "Pharrell Williams", "filename": None},
+    {"title": "Imagine Dragons Radioactive", "artist": "Imagine Dragons", "filename": "1_1772524580_Imagine_Dragons_-_Radioactive_Piano_mp3.pm.mp3"},
+    {"title": "In The Morning", "artist": "ZHU", "filename": "1_1772524189_ZHU_-_In_the_Morning_mp3.pm.mp3"},
+    {"title": "Jab Tak", "artist": "Salman Khan", "filename": None},
+    {"title": "Kesariya", "artist": "Arijit Singh", "filename": None},
+    {"title": "Kishore Kumar Oh Saathi Re", "artist": "Kishore Kumar", "filename": "1_1772524566_Kishore_Kumar_Lata_Mangeshkar_-_Oh_Saathi_Re_mp3.pm.mp3"},
+    {"title": "Laal Ishq", "artist": "Arijit Singh", "filename": None},
+    {"title": "Lean On", "artist": "Major Lazer", "filename": None},
+    {"title": "Mann Mera", "artist": "Gajendra Verma", "filename": None},
+    {"title": "Memories", "artist": "Maroon 5", "filename": None},
+    {"title": "Nachde Ne Saare", "artist": "Jasleen Royal", "filename": None},
+    {"title": "Night Changes", "artist": "One Direction", "filename": None},
+    {"title": "Old Town Road", "artist": "Lil Nas X", "filename": None},
+    {"title": "Perfect", "artist": "Ed Sheeran", "filename": None},
+    {"title": "Qismat", "artist": "B Praak", "filename": None},
+    {"title": "Raataan Lambiyan", "artist": "Jubin Nautiyal", "filename": None},
+    {"title": "Senorita", "artist": "Shawn Mendes", "filename": None},
+    {"title": "Stay", "artist": "The Kid LAROI", "filename": None},
+    {"title": "Sunflower", "artist": "Post Malone", "filename": None},
+    {"title": "Tere Bin", "artist": "Atif Aslam", "filename": None},
+    {"title": "Thunder", "artist": "Imagine Dragons", "filename": None},
+    {"title": "Unstoppable", "artist": "Sia", "filename": None},
+    {"title": "Vaaste", "artist": "Dhvani Bhanushali", "filename": None},
+    {"title": "Viva La Vida", "artist": "Coldplay", "filename": None},
+    {"title": "Without Me", "artist": "Eminem", "filename": None},
+    {"title": "Yellow", "artist": "Coldplay", "filename": None},
+    {"title": "Zara Sa", "artist": "K.K.", "filename": None},
+    {"title": "ZHU In The Morning", "artist": "ZHU", "filename": None},
+]
+def seed_default_songs(user_id):
+    for song_info in DEFAULT_SONGS:
+        filepath = os.path.join(DEFAULT_SONGS_FOLDER, song_info["filename"])
+        if not os.path.exists(filepath):
+            continue
+        already_exists = Song.query.filter_by(
+            user_id=user_id, filename=song_info["filename"]
+        ).first()
+        if not already_exists:
+            song = Song(
+                title=song_info["title"],
+                filename=song_info["filename"],
+                user_id=user_id,
+                is_default=True
+            )
+            db.session.add(song)
+    db.session.commit()
 
-NEUTRAL_DEFAULT_FILENAMES = {
-    "neutral_Gehra_Hua.mp3",
-    "neutral_I_Really_Do.mp3",
-    "neutral_Pal_Pal.mp3",
-    "neutral_new_1.mp3",
-    "neutral_new_2.mp3",
-    "neutral_new_3.mp3",
-    "neutral_new_4.mp3",
-    "neutral_new_5.mp3",
-    "neutral_new_6.mp3",
-    "neutral_new_7.mp3",
-    "neutral_new_8.mp3",
-    "neutral_new_9.mp3",
-    "neutral_new_10.mp3",
-    "neutral_new_11.mp3",
-    "neutral_new_12.mp3",
-    "neutral_new_13.mp3",
-    "neutral_new_14.mp3",
-    "neutral_new_15.mp3",
-    "neutral_new_16.mp3",
-    "neutral_new_17.mp3",
-}
-
+# Initialize database
 db = SQLAlchemy(app)
 
+# Initialize Flask-Login
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = "login"
@@ -108,6 +132,7 @@ login_manager.login_message = "Please log in to access this page."
 login_manager.login_message_category = "info"
 
 
+# ==================== DATABASE MODELS ====================
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
@@ -126,72 +151,65 @@ class User(UserMixin, db.Model):
 class Song(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(200), nullable=False)
-    filename = db.Column(db.String(300), nullable=False)
+    filename = db.Column(db.String(300), nullable=False)   # actual file on disk
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
     uploaded_at = db.Column(db.DateTime, default=datetime.utcnow)
     is_default = db.Column(db.Boolean, default=False)
-    liked = db.Column(db.Boolean, default=False)
 
     def to_dict(self):
         return {
             "id": self.id,
             "title": self.title,
             "uploaded_at": self.uploaded_at.strftime("%d %b %Y"),
-            "liked": bool(self.liked),
         }
 
 
-playlist_songs = db.Table(
-    "playlist_songs",
-    db.Column("playlist_id", db.Integer, db.ForeignKey("playlist.id")),
-    db.Column("song_id", db.Integer, db.ForeignKey("song.id")),
+# ==================== LIKED SONGS MODEL ====================
+class LikedSong(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    song_id = db.Column(db.Integer, db.ForeignKey("song.id"), nullable=False)
+    liked_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    # Ensure a user can only like a song once
+    __table_args__ = (db.UniqueConstraint("user_id", "song_id", name="unique_user_song_like"),)
+
+    song = db.relationship("Song", backref="liked_by", lazy=True)
+
+
+# Junction table (Many-to-Many between Playlist and Song)
+playlist_songs = db.Table('playlist_songs',
+    db.Column('playlist_id', db.Integer, db.ForeignKey('playlist.id')),
+    db.Column('song_id', db.Integer, db.ForeignKey('song.id'))
 )
 
-
+# Playlist model
 class Playlist(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    songs = db.relationship("Song", secondary=playlist_songs, lazy="subquery")
+    songs = db.relationship('Song', secondary=playlist_songs, lazy='subquery')
 
     def to_dict(self):
         return {
             "id": self.id,
             "name": self.name,
             "created_at": self.created_at.strftime("%d %b %Y"),
-            "song_count": len(self.songs),
+            "song_count": len(self.songs)
         }
-
-
-def seed_default_songs(user_id):
-    for song_info in DEFAULT_SONGS:
-        filepath = os.path.join(DEFAULT_SONGS_FOLDER, song_info["filename"])
-        if not os.path.exists(filepath):
-            continue
-        already_exists = Song.query.filter_by(
-            user_id=user_id, filename=song_info["filename"]
-        ).first()
-        if not already_exists:
-            song = Song(
-                title=song_info["title"],
-                filename=song_info["filename"],
-                user_id=user_id,
-                is_default=True,
-            )
-            db.session.add(song)
-    db.session.commit()
-
 
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
 
 
+# ==================== HELPER ====================
 def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
+# ==================== AUTHENTICATION ROUTES ====================
 @app.route("/register", methods=["GET", "POST"])
 def register():
     if current_user.is_authenticated:
@@ -277,6 +295,7 @@ def logout():
     return redirect(url_for("login"))
 
 
+# ==================== MAIN PAGES ====================
 @app.route("/")
 def home():
     return render_template("dashboard.html")
@@ -285,13 +304,83 @@ def home():
 @app.route("/dashboard")
 @login_required
 def dashboard():
-    seed_default_songs(current_user.id)
     return render_template("dashboard.html")
 
+
+@app.route("/liked-songs")
+@login_required
+def liked_songs_page():
+    return render_template("liked_songs.html")
+
+@app.route("/neutral-songs")
+@login_required
+def neutral_songs_page():
+    return render_template("neutral_songs.html")
+
+
+@app.route("/api/catalog-songs")
+@login_required
+def get_catalog_songs():
+    result = []
+    for entry in CATALOG_SONGS:
+        playable = False
+        song_db_id = None
+        if entry["filename"]:
+            filepath = os.path.join(DEFAULT_SONGS_FOLDER, entry["filename"])
+            if os.path.exists(filepath):
+                song = Song.query.filter_by(
+                    user_id=current_user.id,
+                    filename=entry["filename"]
+                ).first()
+                if song:
+                    playable = True
+                    song_db_id = song.id
+        result.append({
+            "title": entry["title"],
+            "artist": entry["artist"],
+            "playable": playable,
+            "song_id": song_db_id,
+        })
+    result.sort(key=lambda x: x["title"].lower())
+    return jsonify({"songs": result})
+@app.route("/neutral-songs")
+@login_required
+def neutral_songs_page():
+    return render_template("neutral_songs.html")
+
+
+@app.route("/api/catalog-songs")
+@login_required
+def get_catalog_songs():
+    result = []
+    for entry in CATALOG_SONGS:
+        playable = False
+        song_db_id = None
+        if entry["filename"]:
+            filepath = os.path.join(DEFAULT_SONGS_FOLDER, entry["filename"])
+            if os.path.exists(filepath):
+                song = Song.query.filter_by(
+                    user_id=current_user.id,
+                    filename=entry["filename"]
+                ).first()
+                if song:
+                    playable = True
+                    song_db_id = song.id
+        result.append({
+            "title": entry["title"],
+            "artist": entry["artist"],
+            "playable": playable,
+            "song_id": song_db_id,
+        })
+    result.sort(key=lambda x: x["title"].lower())
+    return jsonify({"songs": result})
+
+# ==================== MUSIC ROUTES ====================
 
 @app.route("/music/upload", methods=["POST"])
 @login_required
 def upload_song():
+    """Upload one or more MP3 files."""
     if "files" not in request.files:
         return jsonify({"error": "No files provided"}), 400
 
@@ -305,15 +394,17 @@ def upload_song():
             continue
 
         original_name = secure_filename(file.filename)
+        # Make filename unique: userID_timestamp_original
         unique_name = f"{current_user.id}_{int(datetime.utcnow().timestamp())}_{original_name}"
         save_path = os.path.join(app.config["UPLOAD_FOLDER"], unique_name)
         file.save(save_path)
 
+        # Title = filename without extension, underscores → spaces
         title = os.path.splitext(file.filename)[0].replace("_", " ").replace("-", " ")
 
         song = Song(title=title, filename=unique_name, user_id=current_user.id)
         db.session.add(song)
-        db.session.flush()
+        db.session.flush()   # get the id before commit
         uploaded.append(song.to_dict())
 
     db.session.commit()
@@ -323,16 +414,30 @@ def upload_song():
 @app.route("/music/songs")
 @login_required
 def get_songs():
+    """Return all songs for the logged-in user, with liked status."""
     songs = Song.query.filter_by(user_id=current_user.id).order_by(Song.uploaded_at.desc()).all()
-    return jsonify({"songs": [s.to_dict() for s in songs]})
+    liked_ids = {ls.song_id for ls in LikedSong.query.filter_by(user_id=current_user.id).all()}
+    result = []
+    for s in songs:
+        d = s.to_dict()
+        d["liked"] = s.id in liked_ids
+        result.append(d)
+    return jsonify({"songs": result})
 
 
 @app.route("/music/shuffle")
 @login_required
 def shuffle_songs():
+    """Return the user's songs in a random order."""
     songs = Song.query.filter_by(user_id=current_user.id).all()
     random.shuffle(songs)
-    return jsonify({"songs": [s.to_dict() for s in songs]})
+    liked_ids = {ls.song_id for ls in LikedSong.query.filter_by(user_id=current_user.id).all()}
+    result = []
+    for s in songs:
+        d = s.to_dict()
+        d["liked"] = s.id in liked_ids
+        result.append(d)
+    return jsonify({"songs": result})
 
 
 @app.route("/music/play/<int:song_id>")
@@ -341,14 +446,20 @@ def play_song(song_id):
     song = Song.query.filter_by(id=song_id, user_id=current_user.id).first_or_404()
     if song.is_default:
         return send_from_directory(DEFAULT_SONGS_FOLDER, song.filename)
-    return send_from_directory(app.config["UPLOAD_FOLDER"], song.filename)
+    else:
+        return send_from_directory(app.config["UPLOAD_FOLDER"], song.filename)
 
 
 @app.route("/music/delete/<int:song_id>", methods=["DELETE"])
 @login_required
 def delete_song(song_id):
+    """Delete a song from DB and disk."""
     song = Song.query.filter_by(id=song_id, user_id=current_user.id).first_or_404()
 
+    # Remove associated likes first
+    LikedSong.query.filter_by(song_id=song_id).delete()
+
+    # Remove file from disk
     file_path = os.path.join(app.config["UPLOAD_FOLDER"], song.filename)
     if os.path.exists(file_path):
         os.remove(file_path)
@@ -358,92 +469,46 @@ def delete_song(song_id):
     return jsonify({"success": True, "message": f'"{song.title}" deleted.'})
 
 
+# ==================== LIKED SONGS ROUTES ====================
+
 @app.route("/music/like/<int:song_id>", methods=["POST"])
 @login_required
-def toggle_like_song(song_id):
+def like_song(song_id):
+    """Toggle like on a song."""
     song = Song.query.filter_by(id=song_id, user_id=current_user.id).first_or_404()
-    song.liked = not bool(song.liked)
-    db.session.commit()
-    return jsonify(
-        {
-            "success": True,
-            "liked": bool(song.liked),
-            "message": (
-                f'❤️ "{song.title}" added to Liked Songs'
-                if song.liked
-                else f'🤍 "{song.title}" removed from Liked Songs'
-            ),
-        }
-    )
+    existing = LikedSong.query.filter_by(user_id=current_user.id, song_id=song_id).first()
+
+    if existing:
+        db.session.delete(existing)
+        db.session.commit()
+        return jsonify({"success": True, "liked": False, "message": f'Removed "{song.title}" from liked songs.'})
+    else:
+        like = LikedSong(user_id=current_user.id, song_id=song_id)
+        db.session.add(like)
+        db.session.commit()
+        return jsonify({"success": True, "liked": True, "message": f'Added "{song.title}" to liked songs! ❤️'})
 
 
 @app.route("/music/liked")
 @login_required
 def get_liked_songs():
-    songs = (
-        Song.query.filter_by(user_id=current_user.id, liked=True)
-        .order_by(Song.uploaded_at.desc())
+    """Return all liked songs for the current user."""
+    liked = (
+        LikedSong.query
+        .filter_by(user_id=current_user.id)
+        .order_by(LikedSong.liked_at.desc())
         .all()
     )
-    return jsonify({"songs": [s.to_dict() for s in songs]})
+    result = []
+    for ls in liked:
+        d = ls.song.to_dict()
+        d["liked"] = True
+        d["liked_at"] = ls.liked_at.strftime("%d %b %Y")
+        result.append(d)
+    return jsonify({"songs": result})
 
 
-@app.route("/liked-songs")
-@login_required
-def liked_songs_page():
-    return render_template("liked_songs.html")
-
-
-@app.route("/neutral-songs")
-@login_required
-def neutral_songs_page():
-    seed_default_songs(current_user.id)
-    return render_template("neutral_songs.html")
-
-
-@app.route("/api/neutral-songs")
-@login_required
-def api_neutral_songs():
-    seed_default_songs(current_user.id)
-    songs = (
-        Song.query.filter(
-            Song.user_id == current_user.id,
-            Song.filename.in_(list(NEUTRAL_DEFAULT_FILENAMES)),
-        )
-        .order_by(Song.title.asc())
-        .all()
-    )
-
-    def split_artist(title: str):
-        if "—" in title:
-            parts = [p.strip() for p in title.split("—", 1)]
-            if len(parts) == 2:
-                return parts[0], parts[1]
-        if "-" in title:
-            parts = [p.strip() for p in title.split("-", 1)]
-            if len(parts) == 2:
-                return parts[0], parts[1]
-        return title, "Neutral Picks"
-
-    out = []
-    for s in songs:
-        t, artist = split_artist(s.title)
-        path = (
-            os.path.join(DEFAULT_SONGS_FOLDER, s.filename)
-            if s.is_default
-            else os.path.join(app.config["UPLOAD_FOLDER"], s.filename)
-        )
-        out.append(
-            {
-                "song_id": s.id,
-                "title": t,
-                "artist": artist,
-                "playable": os.path.exists(path),
-            }
-        )
-    return jsonify({"songs": out})
-
-
+# ==================== ORIGINAL MUSIC ROUTES ====================
 @app.route("/recommend", methods=["POST"])
 def recommend():
     mood = request.form["mood"].lower()
@@ -472,8 +537,6 @@ def recommend():
             "Bodies - Drowning Pool",
             "Smells Like Teen Spirit - Nirvana",
         ]
-    elif mood == "neutral":
-        songs = [s["title"] for s in DEFAULT_SONGS if s["filename"] in NEUTRAL_DEFAULT_FILENAMES]
     else:
         songs = ["Please enter: happy, sad, or angry"]
 
@@ -498,7 +561,7 @@ def _preload_deepface():
             DeepFace.analyze(img_path=temp, actions=["emotion"], enforce_detection=False)
         if os.path.exists(temp):
             os.remove(temp)
-        print("[DeepFace] Models ready!")
+        print("[DeepFace] ✓ Models ready!")
     except Exception as e:
         print(f"[DeepFace] Pre-load warning: {e} (will load on first use)")
 
@@ -507,7 +570,6 @@ def _preload_deepface():
 def detect_emotion():
     import base64
     import numpy as np
-    import cv2
 
     try:
         data = request.get_json()
@@ -520,6 +582,7 @@ def detect_emotion():
 
         image_bytes = base64.b64decode(image_data)
         nparr = np.frombuffer(image_bytes, np.uint8)
+        import cv2
 
         img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
         if img is None:
@@ -558,7 +621,7 @@ def detect_emotion():
 
         emotion_to_mood = {
             "happy": "happy",
-            "neutral": "neutral",
+            "neutral": "happy",
             "surprise": "happy",
             "sad": "sad",
             "fear": "sad",
@@ -576,8 +639,6 @@ def detect_emotion():
                 "Walking on Sunshine - Katrina",
                 "I Gotta Feeling - Black Eyed Peas",
             ]
-        elif mood == "neutral":
-            songs = [s["title"] for s in DEFAULT_SONGS if s["filename"] in NEUTRAL_DEFAULT_FILENAMES]
         elif mood == "sad":
             songs = [
                 "Someone Like You - Adele",
@@ -600,7 +661,9 @@ def detect_emotion():
     except Exception as e:
         print(f"Error in emotion detection: {e}")
         return jsonify({"error": str(e)}), 500
+    
 
+# ==================== PLAYLIST ROUTES ====================
 
 @app.route("/playlist/create", methods=["POST"])
 @login_required
@@ -652,7 +715,13 @@ def remove_song_from_playlist(playlist_id):
 @login_required
 def get_playlist_songs(playlist_id):
     playlist = Playlist.query.filter_by(id=playlist_id, user_id=current_user.id).first_or_404()
-    return jsonify({"playlist": playlist.name, "songs": [s.to_dict() for s in playlist.songs]})
+    liked_ids = {ls.song_id for ls in LikedSong.query.filter_by(user_id=current_user.id).all()}
+    songs = []
+    for s in playlist.songs:
+        d = s.to_dict()
+        d["liked"] = s.id in liked_ids
+        songs.append(d)
+    return jsonify({"playlist": playlist.name, "songs": songs})
 
 
 @app.route("/playlist/<int:playlist_id>/delete", methods=["DELETE"])
@@ -664,6 +733,7 @@ def delete_playlist(playlist_id):
     return jsonify({"success": True, "message": f'"{playlist.name}" deleted.'})
 
 
+# ==================== TRENDING ARTISTS ROUTES ====================
 @app.route("/trending")
 @login_required
 def trending_page():
@@ -741,18 +811,16 @@ def get_artist_top_tracks(artist_id):
 def init_db():
     with app.app_context():
         db.create_all()
-        inspector = inspect(db.engine)
-        song_columns = {col["name"] for col in inspector.get_columns("song")}
-        if "liked" not in song_columns:
-            db.session.execute(text("ALTER TABLE song ADD COLUMN liked BOOLEAN DEFAULT 0"))
-            db.session.commit()
-        print("Database initialized successfully!")
+        print("✅ Database initialized successfully!")
+
+init_db()
+threading.Thread(target=_preload_deepface, daemon=True).start()
 
 
 if __name__ == "__main__":
     print("\n" + "=" * 50)
-    print("MOOD MUSIC RECOMMENDER + AUTH")
+    print("🎵 MOOD MUSIC RECOMMENDER + AUTH")
     print("=" * 50)
     init_db()
     threading.Thread(target=_preload_deepface, daemon=True).start()
-    app.run(debug=True)
+    app.run(debug=False)
