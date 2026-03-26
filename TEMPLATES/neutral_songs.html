@@ -1,0 +1,317 @@
+{% extends "base.html" %}
+{% block title %}Neutral Mood – All Songs{% endblock %}
+
+{% block content %}
+<style>
+.ns-page {
+  min-height: 100vh;
+  background: linear-gradient(160deg, #0a2a2a 0%, #0d3b3b 35%, #1a5c4a 65%, #1e7a5e 100%);
+  padding-bottom: 60px;
+}
+.ns-header {
+  background: rgba(255,255,255,0.06);
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  padding: 20px 28px;
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;
+}
+.ns-back {
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.18);
+  color: white; padding: 9px 20px; border-radius: 50px;
+  font-size: 13px; font-weight: 600; cursor: pointer;
+  text-decoration: none; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s;
+}
+.ns-back:hover { background: rgba(255,255,255,0.18); transform: translateX(-2px); color: white; }
+.ns-hero {
+  padding: 40px 28px 28px;
+  display: flex; align-items: flex-end; gap: 28px; flex-wrap: wrap;
+}
+.ns-cover {
+  width: 160px; height: 160px; border-radius: 20px;
+  background: linear-gradient(135deg, #14b8a6, #0d9488, #0f766e);
+  display: flex; align-items: center; justify-content: center; font-size: 64px;
+  box-shadow: 0 20px 50px rgba(20,184,166,0.4); flex-shrink: 0;
+  animation: floatCover 4s ease-in-out infinite;
+}
+@keyframes floatCover { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+.ns-hero-meta h1 {
+  font-size: clamp(26px, 4.5vw, 46px); font-weight: 900; color: white;
+  margin: 0 0 6px; letter-spacing: -0.5px; line-height: 1.1;
+}
+.ns-hero-meta p { color: rgba(255,255,255,0.55); font-size: 14px; margin: 0 0 20px; }
+.ns-play-all {
+  background: linear-gradient(135deg, #14b8a6, #0d9488);
+  border: none; color: white; padding: 13px 30px; border-radius: 50px;
+  font-size: 15px; font-weight: 700; cursor: pointer;
+  display: inline-flex; align-items: center; gap: 8px;
+  box-shadow: 0 8px 24px rgba(20,184,166,0.4); transition: all 0.2s;
+}
+.ns-play-all:hover { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(20,184,166,0.55); }
+.ns-now-playing {
+  margin: 0 28px 20px;
+  background: rgba(20,184,166,0.15); border: 1.5px solid rgba(20,184,166,0.35);
+  border-radius: 16px; padding: 14px 18px; color: white; display: none;
+}
+.ns-now-playing.show { display: block; }
+.np-label { font-size: 10px; text-transform: uppercase; letter-spacing: 2px; color: rgba(255,255,255,0.45); margin-bottom: 5px; }
+.np-song  { font-weight: 700; font-size: 15px; margin-bottom: 10px; }
+#ns-audio { width: 100%; border-radius: 8px; height: 36px; }
+.ns-controls {
+  padding: 0 28px 16px;
+  display: flex; gap: 12px; flex-wrap: wrap; align-items: center;
+}
+.ns-search-wrap { position: relative; flex: 1; min-width: 200px; }
+.ns-search-wrap input {
+  width: 100%; padding: 11px 18px 11px 42px; border-radius: 50px;
+  border: 1.5px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.08);
+  color: white; font-size: 14px; outline: none; transition: border 0.2s; box-sizing: border-box;
+}
+.ns-search-wrap input::placeholder { color: rgba(255,255,255,0.35); }
+.ns-search-wrap input:focus { border-color: #14b8a6; }
+.ns-search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 16px; pointer-events: none; }
+.ns-count { color: rgba(255,255,255,0.45); font-size: 13px; white-space: nowrap; padding: 0 4px; }
+.az-bar { padding: 0 28px 20px; display: flex; flex-wrap: wrap; gap: 6px; }
+.az-btn {
+  width: 34px; height: 34px; border-radius: 8px;
+  border: 1.5px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.06);
+  color: rgba(255,255,255,0.6); font-size: 13px; font-weight: 700;
+  cursor: pointer; transition: all 0.15s; display: flex; align-items: center; justify-content: center;
+}
+.az-btn:hover { background: rgba(20,184,166,0.2); color: white; border-color: #14b8a6; }
+.az-btn.active { background: #14b8a6; color: white; border-color: #14b8a6; box-shadow: 0 4px 12px rgba(20,184,166,0.4); }
+.az-btn.all-btn { width: auto; padding: 0 14px; font-size: 12px; }
+.ns-list { padding: 0 28px; }
+.ns-letter-group { margin-bottom: 24px; }
+.ns-letter-heading {
+  font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 3px;
+  color: #14b8a6; padding: 0 0 8px; border-bottom: 1px solid rgba(20,184,166,0.2); margin-bottom: 8px;
+}
+.ns-song-row {
+  display: flex; align-items: center; gap: 14px; padding: 10px 12px;
+  border-radius: 12px; margin-bottom: 4px; transition: background 0.15s; border: 1.5px solid transparent;
+}
+.ns-song-row:hover { background: rgba(255,255,255,0.06); }
+.ns-song-row.playing { background: rgba(20,184,166,0.15); border-color: rgba(20,184,166,0.35); }
+.ns-song-row.unavailable { opacity: 0.45; }
+.ns-play-btn {
+  width: 38px; height: 38px; border-radius: 50%; border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0;
+  transition: all 0.2s; background: rgba(255,255,255,0.1); color: white;
+}
+.ns-song-row.playing .ns-play-btn { background: #14b8a6; box-shadow: 0 4px 14px rgba(20,184,166,0.45); }
+.ns-play-btn:hover { transform: scale(1.1); background: rgba(20,184,166,0.35); }
+.ns-song-info { flex: 1; min-width: 0; }
+.ns-song-title { font-weight: 600; font-size: 14px; color: white; margin: 0 0 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ns-song-artist { font-size: 11px; color: rgba(255,255,255,0.45); margin: 0; }
+.ns-unavail-tag {
+  font-size: 10px; font-weight: 600; color: rgba(255,255,255,0.3);
+  background: rgba(255,255,255,0.07); padding: 3px 10px; border-radius: 50px; white-space: nowrap; flex-shrink: 0;
+}
+.ns-empty { text-align: center; padding: 60px 20px; color: rgba(255,255,255,0.4); }
+.ns-empty .ei { font-size: 56px; margin-bottom: 14px; }
+.ns-empty h3 { color: rgba(255,255,255,0.65); font-size: 18px; margin-bottom: 6px; }
+.ns-toast {
+  position: fixed; bottom: 24px; left: 50%;
+  transform: translateX(-50%) translateY(16px);
+  padding: 11px 22px; border-radius: 50px; font-size: 13px; font-weight: 600;
+  color: white; background: #0d9488; opacity: 0; transition: all 0.3s; z-index: 999;
+  pointer-events: none; white-space: nowrap; box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+}
+.ns-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+</style>
+
+<div class="ns-page">
+  <div class="ns-header">
+    <a href="/dashboard" class="ns-back">← Back to Dashboard</a>
+    <span style="color:rgba(255,255,255,0.4);font-size:13px;">Mood Music · Neutral Mood</span>
+  </div>
+
+  <div class="ns-hero">
+    <div class="ns-cover">😌</div>
+    <div class="ns-hero-meta">
+      <p style="font-size:11px;text-transform:uppercase;letter-spacing:2px;color:rgba(255,255,255,0.4);margin-bottom:8px;">All Songs — A to Z</p>
+      <h1>Feeling Neutral?<br>Here's Everything.</h1>
+      <p id="ns-hero-sub">Browse the full catalog and play something wonderful.</p>
+      <button class="ns-play-all" onclick="playAll()">▶ Play All</button>
+    </div>
+  </div>
+
+  <div class="ns-now-playing" id="ns-now-playing">
+    <div class="np-label">▶ Now Playing</div>
+    <div class="np-song" id="ns-np-title">—</div>
+    <audio id="ns-audio" controls onended="playNext()"></audio>
+  </div>
+
+  <div class="ns-controls">
+    <div class="ns-search-wrap">
+      <span class="ns-search-icon">🔍</span>
+      <input type="text" id="ns-search" placeholder="Search songs or artists..." oninput="handleSearch(this.value)">
+    </div>
+    <span class="ns-count" id="ns-count">Loading...</span>
+  </div>
+
+  <div class="az-bar" id="az-bar">
+    <button class="az-btn all-btn active" onclick="filterLetter('ALL', this)">All</button>
+  </div>
+
+  <div class="ns-list" id="ns-list">
+    <div class="ns-empty"><div class="ei">⏳</div><h3>Loading songs...</h3></div>
+  </div>
+</div>
+
+<div class="ns-toast" id="ns-toast"></div>
+
+<script>
+  let allSongs = [];
+  let filtered = [];
+  let activeLetter = "ALL";
+  let currentPlayIdx = -1;
+
+  document.addEventListener("DOMContentLoaded", async () => {
+    buildAZBar();
+    await loadCatalog();
+  });
+
+  async function loadCatalog() {
+    try {
+      const res  = await fetch("/api/neutral-songs");
+      const data = await res.json();
+      allSongs = data.songs || [];
+      applyFilter();
+    } catch (e) {
+      document.getElementById("ns-list").innerHTML =
+        `<div class="ns-empty"><div class="ei">❌</div><h3>Could not load songs</h3><p>Please refresh.</p></div>`;
+    }
+  }
+
+  function buildAZBar() {
+    const bar = document.getElementById("az-bar");
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").forEach(l => {
+      const btn = document.createElement("button");
+      btn.className = "az-btn";
+      btn.textContent = l;
+      btn.onclick = () => filterLetter(l, btn);
+      bar.appendChild(btn);
+    });
+  }
+
+  function filterLetter(letter, btn) {
+    activeLetter = letter;
+    document.querySelectorAll(".az-btn").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    document.getElementById("ns-search").value = "";
+    applyFilter();
+  }
+
+  function handleSearch(query) {
+    document.querySelectorAll(".az-btn").forEach(b => b.classList.remove("active"));
+    document.querySelector(".az-btn.all-btn").classList.add("active");
+    activeLetter = "ALL";
+    applyFilter(query.trim().toLowerCase());
+  }
+
+  function applyFilter(searchQ = "") {
+    if (searchQ) {
+      filtered = allSongs.filter(s =>
+        s.title.toLowerCase().includes(searchQ) || s.artist.toLowerCase().includes(searchQ)
+      );
+    } else if (activeLetter === "ALL") {
+      filtered = [...allSongs];
+    } else {
+      filtered = allSongs.filter(s => s.title.trim().toUpperCase().startsWith(activeLetter));
+    }
+    currentPlayIdx = -1;
+    renderList(searchQ !== "");
+    updateCount();
+  }
+
+  function updateCount() {
+    const total = allSongs.length;
+    const showing = filtered.length;
+    document.getElementById("ns-count").textContent =
+      showing === total ? `${total} songs` : `${showing} of ${total} songs`;
+    document.getElementById("ns-hero-sub").textContent =
+      showing === total ? "Browse the full catalog and play something wonderful."
+                        : `Showing ${showing} result${showing !== 1 ? "s" : ""}`;
+  }
+
+  function renderList(isSearch = false) {
+    const container = document.getElementById("ns-list");
+    if (filtered.length === 0) {
+      container.innerHTML = `<div class="ns-empty"><div class="ei">🔍</div><h3>No songs found</h3><p>Try a different search or letter.</p></div>`;
+      return;
+    }
+    if (isSearch) {
+      container.innerHTML = `<div class="ns-letter-group">${filtered.map((s,i) => songRow(s,i)).join("")}</div>`;
+      return;
+    }
+    const groups = {};
+    filtered.forEach((s, idx) => {
+      const letter = s.title.trim()[0].toUpperCase();
+      if (!groups[letter]) groups[letter] = [];
+      groups[letter].push({ song: s, idx });
+    });
+    container.innerHTML = Object.keys(groups).sort().map(letter => `
+      <div class="ns-letter-group">
+        <div class="ns-letter-heading">${letter}</div>
+        ${groups[letter].map(({ song, idx }) => songRow(song, idx)).join("")}
+      </div>`).join("");
+  }
+
+  function songRow(song, idx) {
+    const isPlaying = idx === currentPlayIdx;
+    const unavail   = !song.playable;
+    return `
+      <div class="ns-song-row ${isPlaying ? 'playing' : ''} ${unavail ? 'unavailable' : ''}" id="ns-row-${idx}">
+        <button class="ns-play-btn"
+          onclick="${unavail ? `showToast('⚠️ File not uploaded yet')` : `playSong(${idx})`}"
+          title="${unavail ? 'Not available' : 'Play'}">
+          ${isPlaying ? '▶' : (unavail ? '⊘' : '▷')}
+        </button>
+        <div class="ns-song-info">
+          <p class="ns-song-title">${escHtml(song.title)}</p>
+          <p class="ns-song-artist">${escHtml(song.artist)}</p>
+        </div>
+        ${unavail ? '<span class="ns-unavail-tag">File not added yet</span>' : ''}
+      </div>`;
+  }
+
+  function playSong(idx) {
+    const song = filtered[idx];
+    if (!song || !song.playable) return;
+    currentPlayIdx = idx;
+    const audio = document.getElementById("ns-audio");
+    const bar   = document.getElementById("ns-now-playing");
+    document.getElementById("ns-np-title").textContent = `${song.title} — ${song.artist}`;
+    audio.src = `/music/play/${song.song_id}`;
+    bar.classList.add("show");
+    audio.play().catch(() => {});
+    renderList(document.getElementById("ns-search").value.trim() !== "");
+    bar.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }
+
+  function playAll() {
+    const first = filtered.findIndex(s => s.playable);
+    if (first === -1) { showToast("No playable songs in this view!"); return; }
+    playSong(first);
+  }
+
+  function playNext() {
+    let next = currentPlayIdx + 1;
+    while (next < filtered.length && !filtered[next].playable) next++;
+    if (next < filtered.length) playSong(next);
+  }
+
+  function showToast(msg) {
+    const el = document.getElementById("ns-toast");
+    el.textContent = msg;
+    el.classList.add("show");
+    setTimeout(() => el.classList.remove("show"), 3500);
+  }
+
+  function escHtml(s) {
+    return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+  }
+</script>
+{% endblock %}

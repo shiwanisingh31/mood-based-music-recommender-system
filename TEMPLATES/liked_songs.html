@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+
+{% block title %}Liked Songs - Mood Music{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 900px; margin: 0 auto; padding: 20px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom: 14px;">
+        <div>
+            <h2 style="margin:0; color:#e11d48;">❤️ Liked Songs</h2>
+            <p style="margin:6px 0 0; color:#6b7280; font-size:13px;">Your favorite tracks in one place.</p>
+        </div>
+        <a href="{{ url_for('dashboard') }}"
+           style="background:#ede9fe; color:#667eea; text-decoration:none; padding:10px 14px; border-radius:10px; font-weight:600; font-size:13px;">
+            ← Back to Dashboard
+        </a>
+    </div>
+
+    <div id="liked-now-playing"
+         style="display:none; background: linear-gradient(135deg, #e11d48, #be123c);
+                border-radius: 14px; padding: 16px; margin-bottom: 16px; color: white;">
+        <p style="font-size: 11px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.9; margin: 0 0 6px;">
+            ▶ Now Playing
+        </p>
+        <p id="liked-now-playing-title" style="font-weight: 700; font-size: 16px; margin: 0 0 12px;"></p>
+        <audio id="liked-audio-player" controls style="width: 100%; border-radius: 8px;"></audio>
+    </div>
+
+    <div id="liked-song-list">
+        <p style="color:#9ca3af; text-align:center; padding:24px 0;">Loading liked songs...</p>
+    </div>
+</div>
+
+<script>
+let likedSongs = [];
+let likedIndex = -1;
+
+document.addEventListener("DOMContentLoaded", () => {
+    loadLikedSongs();
+});
+
+async function loadLikedSongs() {
+    try {
+        const res = await fetch("/music/liked");
+        const data = await res.json();
+        likedSongs = data.songs || [];
+        renderLikedSongs();
+    } catch (e) {
+        document.getElementById("liked-song-list").innerHTML =
+            `<p style="color:#dc2626; text-align:center; padding:24px 0;">Could not load liked songs.</p>`;
+    }
+}
+
+function renderLikedSongs() {
+    const container = document.getElementById("liked-song-list");
+    if (likedSongs.length === 0) {
+        container.innerHTML =
+            `<p style="color:#9ca3af; text-align:center; padding:24px 0;">No liked songs yet. Go to Dashboard and tap the heart icon.</p>`;
+        return;
+    }
+
+    container.innerHTML = likedSongs.map((song, idx) => `
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:10px;
+                    background:${likedIndex === idx ? '#ffe4e6' : '#fff1f2'}; border:1px solid #fecdd3;
+                    border-radius:12px; padding:12px; margin-bottom:8px;">
+            <div style="min-width:0; flex:1;">
+                <p style="margin:0; color:#9f1239; font-weight:700; font-size:14px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                    ${escapeHtml(song.title)}
+                </p>
+                <p style="margin:4px 0 0; color:#be123c; font-size:11px;">${song.uploaded_at}</p>
+            </div>
+            <button onclick="playLikedSong(${idx})"
+                    style="background:#e11d48; color:#fff; border:none; border-radius:999px;
+                           padding:7px 12px; cursor:pointer; font-size:12px; font-weight:700;">
+                ▶ Play
+            </button>
+        </div>
+    `).join("");
+}
+
+function playLikedSong(idx) {
+    if (idx < 0 || idx >= likedSongs.length) return;
+    likedIndex = idx;
+    const song = likedSongs[idx];
+
+    const audio = document.getElementById("liked-audio-player");
+    const bar = document.getElementById("liked-now-playing");
+    const title = document.getElementById("liked-now-playing-title");
+
+    audio.src = `/music/play/${song.id}`;
+    title.textContent = song.title;
+    bar.style.display = "block";
+    audio.play().catch(() => {});
+    renderLikedSongs();
+}
+
+function escapeHtml(str) {
+    return str.replace(/&/g, "&amp;")
+              .replace(/</g, "&lt;")
+              .replace(/>/g, "&gt;")
+              .replace(/"/g, "&quot;")
+              .replace(/'/g, "&#039;");
+}
+</script>
+{% endblock %}

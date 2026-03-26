@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Mood Music Recommender{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Navbar styling */
+        .auth-navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1000;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .auth-navbar .logo {
+            color: white;
+            font-size: 1.5rem;
+            font-weight: 700;
+            text-decoration: none;
+        }
+
+        .auth-navbar .nav-links {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .auth-navbar .nav-link {
+            color: white;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .auth-navbar .nav-link:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .auth-navbar .btn-logout {
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid white;
+        }
+
+        /* Flash messages */
+        .flash-container {
+            position: fixed;
+            top: 90px;
+            right: 20px;
+            z-index: 9999;
+            max-width: 400px;
+        }
+
+        .flash-message {
+            padding: 1rem 1.5rem;
+            margin-bottom: 1rem;
+            border-radius: 12px;
+            color: white;
+            animation: slideIn 0.4s ease;
+        }
+
+        .flash-success { background: linear-gradient(135deg, rgba(16, 185, 129, 0.9), rgba(5, 150, 105, 0.9)); }
+        .flash-error { background: linear-gradient(135deg, rgba(239, 68, 68, 0.9), rgba(220, 38, 38, 0.9)); }
+        .flash-info { background: linear-gradient(135deg, rgba(59, 130, 246, 0.9), rgba(37, 99, 235, 0.9)); }
+
+        @keyframes slideIn {
+            from { transform: translateX(400px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .flash-close {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            float: right;
+            margin-left: 1rem;
+        }
+
+        .main-content {
+            padding-top: 80px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="auth-navbar">
+        <a href="{{ url_for('home') }}" class="logo">
+            🎵 Mood Music
+        </a>
+        
+        <div class="nav-links">
+            {% if current_user.is_authenticated %}
+                <span style="color: white;">Hi, {{ current_user.username }}!</span>
+                <a href="{{ url_for('dashboard') }}" class="nav-link">Dashboard</a>
+<a href="/neutral-songs" class="nav-link" style="background: linear-gradient(135deg, #0d9488, #0f766e); border: none;">😌 Neutral Mood</a>
+<a href="{{ url_for('logout') }}" class="nav-link btn-logout">Logout</a>
+            {% else %}
+                <a href="{{ url_for('login') }}" class="nav-link">Login</a>
+                <a href="{{ url_for('register') }}" class="nav-link">Sign Up</a>
+            {% endif %}
+        </div>
+    </nav>
+
+    <!-- Flash Messages -->
+    <div class="flash-container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash-message flash-{{ category }}">
+                        <button class="flash-close" onclick="this.parentElement.style.display='none'">×</button>
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        {% block content %}{% endblock %}
+    </main>
+
+    <script>
+        // Auto-hide flash messages after 5 seconds
+        setTimeout(function() {
+            document.querySelectorAll('.flash-message').forEach(function(msg) {
+                msg.style.display = 'none';
+            });
+        }, 5000);
+    </script>
+</body>
+</html>

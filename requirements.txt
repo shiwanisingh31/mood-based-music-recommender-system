@@ -1,5 +1,7 @@
 Flask==3.0.0
 gunicorn==21.2.0
+Flask-Login==0.6.3
+Flask-SQLAlchemy==3.1.1
 deepface==0.0.79
 opencv-python-headless==4.8.1.78
 numpy>=1.19.0

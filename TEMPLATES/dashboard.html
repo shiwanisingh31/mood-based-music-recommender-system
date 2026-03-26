@@ -1,0 +1,577 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Mood Music{% endblock %}
+
+{% block content %}
+<div class="floating-emojis">
+    <div class="emoji-float">🎵</div>
+    <div class="emoji-float">😊</div>
+    <div class="emoji-float">🎧</div>
+    <div class="emoji-float">🎶</div>
+    <div class="emoji-float">😢</div>
+    <div class="emoji-float">😠</div>
+    <div class="emoji-float">❤️</div>
+    <div class="emoji-float">🎵</div>
+    <div class="emoji-float">🎤</div>
+    <div class="emoji-float">🤍</div>
+</div>
+
+<div class="container">
+    <div class="emoji">🎵</div>
+    <h1>Mood Music Recommender</h1>
+    
+    {% if current_user.is_authenticated %}
+        <p style="color: #16a34a; margin: 10px 0 0; font-size: 13px; font-weight: 600;">
+            Logged in as {{ current_user.username }}
+        </p>
+    {% else %}
+        <p style="color: #6b7280; margin: 10px 0 0; font-size: 13px;">
+            Guest mode — <a href="{{ url_for('login') }}" style="color:#667eea; font-weight:700; text-decoration:none;">login</a>
+            to access Trending Artists.
+        </p>
+    {% endif %}
+    
+    <p style="color: #666; margin-bottom: 20px; font-size: 14px;">Tell us how you're feeling!</p>
+    <div style="text-align:center; margin-bottom: 20px;">
+    <a href="/neutral-songs" style="background: linear-gradient(135deg, #0d9488, #0f766e); color: white; text-decoration: none; padding: 13px 28px; border-radius: 12px; font-weight: 700; font-size: 15px; display: inline-block;">😌 Click here if your mood is neutral</a>
+</div>
+
+    <form action="/recommend" method="POST">
+        <input type="text" name="mood" placeholder="😊 happy, 😢 sad, or 😠 angry" required>
+        <br>
+        <button type="submit">🎧 Get Songs</button>
+    </form>
+    
+    <div style="margin: 40px 0; border-top: 2px solid #ddd;"></div>
+    
+    <h3 style="color: #667eea; margin-bottom: 15px;">🔍 Or Search for a Song</h3>
+    <input type="text" id="search-box" placeholder="Type song name or artist..." style="margin-bottom: 10px;">
+    <div id="search-results"></div>
+
+    <div style="margin: 40px 0; border-top: 2px solid #ddd;"></div>
+    
+    <h3 style="color: #667eea; margin-bottom: 15px;">📸 Or Use Webcam to Detect Mood</h3>
+    <button id="start-webcam-btn" type="button">Start Webcam</button>
+    
+    <div id="webcam-container" style="display: none; margin-top: 20px;">
+        <video id="webcam" autoplay playsinline style="width: 100%; max-width: 400px; border-radius: 15px; border: 3px solid #667eea;"></video>
+        <br><br>
+        <button id="capture-btn" type="button">📸 Capture & Detect Emotion</button>
+        <button id="stop-webcam-btn" type="button" style="background: #dc3545;">Stop Webcam</button>
+    </div>
+    
+    <canvas id="canvas" style="display: none;"></canvas>
+    
+    <div id="emotion-result" style="margin-top: 20px;"></div>
+
+    <div style="text-align: center; margin-top: 25px; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+        {% if current_user.is_authenticated %}
+            <a href="/trending" class="trending-btn">🔥 Trending Artists</a>
+            <a href="/liked-songs" class="trending-btn" style="background: linear-gradient(135deg, #e11d48, #be123c); color: white; text-decoration: none; padding: 12px 24px; border-radius: 12px; font-weight: 700; font-size: 15px; display: inline-block; transition: opacity 0.2s;" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">❤️ Liked Songs</a>
+        
+            <a href="{{ url_for('login') }}" class="trending-btn">🔐 Login to view Trending Artists</a>
+        {% endif %}
+    </div>
+
+    <!-- ==================== MUSIC PLAYER ==================== -->
+    {% if current_user.is_authenticated %}
+    <div style="margin: 40px 0; border-top: 2px solid #ddd;"></div>
+
+    <div id="music-player-section">
+        <h3 style="color: #667eea; margin-bottom: 5px;">🎵 My Music Library</h3>
+        <p style="color: #888; font-size: 13px; margin-bottom: 20px;">Upload your MP3 files and play them right here!</p>
+
+        <!-- Upload Area -->
+        <div id="upload-area"
+             style="border: 2px dashed #667eea; border-radius: 15px; padding: 30px 20px;
+                    text-align: center; cursor: pointer; background: #f8f7ff;
+                    transition: background 0.2s; margin-bottom: 20px;"
+             onclick="document.getElementById('mp3-input').click()"
+             ondragover="event.preventDefault(); this.style.background='#ede9fe';"
+             ondragleave="this.style.background='#f8f7ff';"
+             ondrop="handleDrop(event)">
+            <div style="font-size: 2.5rem;">🎵</div>
+            <p style="color: #667eea; font-weight: 600; margin: 8px 0 4px;">Click or drag MP3 files here</p>
+            <p style="color: #aaa; font-size: 12px;">Supports MP3, WAV, OGG, M4A, FLAC · Max 50MB each</p>
+            <input type="file" id="mp3-input" accept=".mp3,.wav,.ogg,.m4a,.flac"
+                   multiple style="display:none;" onchange="uploadFiles(this.files)">
+        </div>
+
+        <!-- Upload progress -->
+        <div id="upload-status" style="display:none; margin-bottom: 15px; padding: 10px 15px;
+             border-radius: 10px; background: #ede9fe; color: #667eea; font-size: 14px; text-align:center;">
+        </div>
+
+        <!-- Controls: Shuffle -->
+        <div style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;">
+            <button onclick="loadSongs()" 
+                    style="background: #667eea; color: white; border: none; padding: 10px 20px;
+                           border-radius: 10px; cursor: pointer; font-size: 14px; font-weight: 600;">
+                🔄 Refresh
+            </button>
+            <button onclick="shuffleSongs()" 
+                    style="background: #f59e0b; color: white; border: none; padding: 10px 20px;
+                           border-radius: 10px; cursor: pointer; font-size: 14px; font-weight: 600;">
+                🔀 Shuffle
+            </button>
+        </div>
+
+        <!-- Now Playing Bar -->
+        <div id="now-playing" style="display:none; background: linear-gradient(135deg, #667eea, #764ba2);
+             border-radius: 15px; padding: 20px; margin-bottom: 20px; color: white;">
+            <p style="font-size: 11px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.8; margin-bottom: 6px;">
+                ▶ Now Playing
+            </p>
+            <p id="now-playing-title" style="font-weight: 700; font-size: 16px; margin-bottom: 14px;"></p>
+            <audio id="audio-player" controls style="width: 100%; border-radius: 8px;"
+                   onended="playNext()"></audio>
+        </div>
+        <!-- Playlist Section -->
+        <div style="margin-bottom: 20px;">
+            <h3 style="color: #667eea; margin-bottom: 10px;">📋 My Playlists</h3>
+            
+            <!-- Create Playlist -->
+            <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                <input type="text" id="playlist-name-input" 
+                       placeholder="Enter playlist name..."
+                       style="flex:1; padding: 10px 15px; border-radius: 10px;
+                              border: 2px solid #667eea; font-size: 14px; outline: none;">
+                <button onclick="createPlaylist()"
+                        style="background: #667eea; color: white; border: none;
+                               padding: 10px 20px; border-radius: 10px;
+                               cursor: pointer; font-weight: 600; font-size: 14px;">
+                    ➕ Create
+                </button>
+            </div>
+
+            <!-- Playlist List -->
+            <div id="playlist-list"></div>
+        </div>
+        <!-- Song List -->
+        <div id="song-list">
+            <p style="color: #aaa; text-align: center; font-size: 14px; padding: 20px 0;">
+                Loading your songs...
+            </p>
+        </div>
+
+    </div>
+
+        
+    {% endif %}
+    <!-- ==================== END MUSIC PLAYER ==================== -->
+</div>
+
+<script src="{{ url_for('static', filename='script.js') }}"></script>
+
+{% if current_user.is_authenticated %}
+<script>
+// ── State ──────────────────────────────────────────────────────────────
+let playlist = [];          // current ordered list [{id, title, liked, ...}]
+let currentIndex = -1;      // which song is playing
+
+// ── Load songs on page ready ───────────────────────────────────────────
+document.addEventListener("DOMContentLoaded", () => {
+    loadSongs();
+    loadPlaylists();
+});
+
+async function loadSongs() {
+    try {
+        const res = await fetch("/music/songs");
+        const data = await res.json();
+        playlist = data.songs || [];
+        renderSongList();
+    } catch (e) {
+        showSongListMessage("❌ Could not load songs. Please refresh.");
+    }
+}
+
+async function shuffleSongs() {
+    try {
+        const res = await fetch("/music/shuffle");
+        const data = await res.json();
+        playlist = data.songs || [];
+        currentIndex = -1;
+        renderSongList();
+        showUploadStatus("🔀 Playlist shuffled!", "#f59e0b");
+    } catch (e) {
+        showUploadStatus("❌ Shuffle failed.", "#dc3545");
+    }
+}
+
+// ── Render song list ───────────────────────────────────────────────────
+function renderSongList() {
+    const container = document.getElementById("song-list");
+
+    if (playlist.length === 0) {
+        container.innerHTML = `
+            <div style="text-align:center; padding: 30px 0; color: #aaa;">
+                <div style="font-size:2rem; margin-bottom:8px;">🎵</div>
+                <p>No songs yet — upload some MP3 files above!</p>
+            </div>`;
+        return;
+    }
+
+    const items = playlist.map((song, idx) => `
+        <div id="song-item-${song.id}"
+             style="display: flex; align-items: center; gap: 12px; padding: 12px 15px;
+                    border-radius: 12px; margin-bottom: 8px; cursor: pointer;
+                    background: ${currentIndex === idx ? 'linear-gradient(135deg,#667eea22,#764ba222)' : '#f8f8ff'};
+                    border: 2px solid ${currentIndex === idx ? '#667eea' : 'transparent'};
+                    transition: all 0.2s;">
+            <!-- Play button -->
+            <button onclick="playSong(${idx})"
+                    style="background: ${currentIndex === idx ? '#667eea' : '#ede9fe'};
+                           color: ${currentIndex === idx ? 'white' : '#667eea'};
+                           border: none; width: 38px; height: 38px; border-radius: 50%;
+                           font-size: 14px; cursor: pointer; flex-shrink: 0;
+                           display: flex; align-items: center; justify-content: center;">
+                ${currentIndex === idx ? '▶' : '▷'}
+            </button>
+
+           <!-- Title & date -->
+            <div style="flex: 1; min-width: 0; width: 120px;">
+                <p style="font-weight: 600; font-size: 14px; color: #333;
+                           white-space: nowrap; overflow: visible;
+                           margin: 0 0 2px;">
+                    ${escapeHtml(song.title)}
+                </p>
+                <p style="font-size: 11px; color: #aaa; margin: 0;">${song.uploaded_at}</p>
+            </div>
+
+            <!-- Like button -->
+            <button onclick="toggleLike(${song.id}, this)"
+                    title="${song.liked ? 'Unlike' : 'Like'} song"
+                    data-liked="${song.liked ? 'true' : 'false'}"
+                    style="background: ${song.liked ? '#ffe4e6' : '#f3f4f6'}; 
+                           color: ${song.liked ? '#e11d48' : '#9ca3af'}; 
+                           border: none;
+                           width: 34px; height: 34px; border-radius: 50%; font-size: 16px;
+                           cursor: pointer; flex-shrink: 0;
+                           display: flex; align-items: center; justify-content: center;
+                           transition: all 0.2s; transform: scale(1);">
+                ${song.liked ? '❤️' : '🤍'}
+            </button>
+
+            <!-- Share button -->
+            <button onclick="shareSong('${escapeHtml(song.title)}')"
+                    title="Share song"
+                    style="background: #d1fae5; color: #16a34a; border: none;
+                           width: 34px; height: 34px; border-radius: 50%; font-size: 15px;
+                           cursor: pointer; flex-shrink: 0;
+                           display: flex; align-items: center; justify-content: center;">
+                🔗
+            </button>
+
+            <!-- Add to Playlist button -->
+            <button onclick="showAddToPlaylist(${song.id})"
+                    title="Add to playlist"
+                    style="background: #ede9fe; color: #667eea; border: none;
+                           width: 34px; height: 34px; border-radius: 50%; font-size: 15px;
+                           cursor: pointer; flex-shrink: 0;
+                           display: flex; align-items: center; justify-content: center;">
+                ➕
+            </button>
+
+            <!-- Delete button -->
+            <button onclick="deleteSong(${song.id}, event)"
+                    title="Delete song"
+                    style="background: #fee2e2; color: #dc3545; border: none;
+                           width: 34px; height: 34px; border-radius: 50%; font-size: 15px;
+                           cursor: pointer; flex-shrink: 0;
+                           display: flex; align-items: center; justify-content: center;
+                           transition: background 0.2s;">
+                🗑
+            </button>
+        </div>`).join("");
+
+    container.innerHTML = items;
+}
+
+// ── Toggle Like ────────────────────────────────────────────────────────
+async function toggleLike(songId, btn) {
+    // Animate the button
+    btn.style.transform = "scale(1.4)";
+    setTimeout(() => { btn.style.transform = "scale(1)"; }, 200);
+
+    try {
+        const res = await fetch(`/music/like/${songId}`, { method: "POST" });
+        const data = await res.json();
+        if (data.success) {
+            // Update local playlist state
+            const song = playlist.find(s => s.id === songId);
+            if (song) song.liked = data.liked;
+
+            // Update button visually without full re-render
+            btn.dataset.liked = data.liked ? "true" : "false";
+            btn.innerHTML = data.liked ? "❤️" : "🤍";
+            btn.style.background = data.liked ? "#ffe4e6" : "#f3f4f6";
+            btn.style.color = data.liked ? "#e11d48" : "#9ca3af";
+            btn.title = data.liked ? "Unlike song" : "Like song";
+
+            showUploadStatus(data.message, data.liked ? "#e11d48" : "#667eea");
+        }
+    } catch (e) {
+        showUploadStatus("❌ Could not update like.", "#dc3545");
+    }
+}
+
+// ── Play a song ────────────────────────────────────────────────────────
+function playSong(idx) {
+    if (idx < 0 || idx >= playlist.length) return;
+    currentIndex = idx;
+    const song = playlist[idx];
+
+    const audio = document.getElementById("audio-player");
+    const nowPlaying = document.getElementById("now-playing");
+    const title = document.getElementById("now-playing-title");
+
+    audio.src = `/music/play/${song.id}`;
+    title.textContent = song.title;
+    nowPlaying.style.display = "block";
+    audio.play().catch(() => {});   // browser may require user gesture
+
+    renderSongList();               // re-render to update highlight
+    // scroll now-playing into view
+    nowPlaying.scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+
+function playNext() {
+    if (playlist.length === 0) return;
+    const next = (currentIndex + 1) % playlist.length;
+    playSong(next);
+}
+
+// ── Delete a song ──────────────────────────────────────────────────────
+async function deleteSong(songId, event) {
+    event.stopPropagation();
+    if (!confirm("Delete this song? This cannot be undone.")) return;
+
+    try {
+        const res = await fetch(`/music/delete/${songId}`, { method: "DELETE" });
+        const data = await res.json();
+
+        if (data.success) {
+            // If the deleted song was playing, stop audio
+            const deletedIdx = playlist.findIndex(s => s.id === songId);
+            if (deletedIdx === currentIndex) {
+                const audio = document.getElementById("audio-player");
+                audio.pause();
+                audio.src = "";
+                document.getElementById("now-playing").style.display = "none";
+                currentIndex = -1;
+            } else if (deletedIdx < currentIndex) {
+                currentIndex--;   // adjust index after removal
+            }
+
+            playlist = playlist.filter(s => s.id !== songId);
+            renderSongList();
+            showUploadStatus(`🗑 ${data.message}`, "#dc3545");
+        } else {
+            showUploadStatus("❌ Delete failed.", "#dc3545");
+        }
+    } catch (e) {
+        showUploadStatus("❌ Delete failed.", "#dc3545");
+    }
+}
+
+// ── Upload files ───────────────────────────────────────────────────────
+function handleDrop(event) {
+    event.preventDefault();
+    document.getElementById("upload-area").style.background = "#f8f7ff";
+    const files = event.dataTransfer.files;
+    if (files.length > 0) uploadFiles(files);
+}
+
+async function uploadFiles(files) {
+    if (!files || files.length === 0) return;
+
+    showUploadStatus(`⏫ Uploading ${files.length} file(s)...`, "#667eea");
+
+    const formData = new FormData();
+    for (const file of files) formData.append("files", file);
+
+    try {
+        const res = await fetch("/music/upload", { method: "POST", body: formData });
+        const data = await res.json();
+
+        if (data.success) {
+            showUploadStatus(`✅ ${data.songs.length} song(s) uploaded!`, "#16a34a");
+            await loadSongs();
+        } else {
+            showUploadStatus("❌ Upload failed: " + (data.error || "unknown error"), "#dc3545");
+        }
+    } catch (e) {
+        showUploadStatus("❌ Upload failed. Please try again.", "#dc3545");
+    }
+
+    // clear input so same file can be re-uploaded
+    document.getElementById("mp3-input").value = "";
+}
+
+// ── Helpers ────────────────────────────────────────────────────────────
+function showUploadStatus(msg, color) {
+    const el = document.getElementById("upload-status");
+    el.textContent = msg;
+    el.style.background = color + "22";
+    el.style.color = color;
+    el.style.display = "block";
+    setTimeout(() => { el.style.display = "none"; }, 4000);
+}
+
+function showSongListMessage(msg) {
+    document.getElementById("song-list").innerHTML =
+        `<p style="color:#aaa; text-align:center; padding:20px 0;">${msg}</p>`;
+}
+
+
+function escapeHtml(str) {
+    return str.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+              .replace(/"/g,"&quot;").replace(/'/g,"&#039;");
+}
+
+// ── Playlist Functions ─────────────────────────────────────────────────
+
+async function createPlaylist() {
+    const input = document.getElementById("playlist-name-input");
+    const name = input.value.trim();
+    if (!name) { alert("Please enter a playlist name!"); return; }
+
+    const res = await fetch("/playlist/create", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({ name: name })
+    });
+    const data = await res.json();
+    if (data.success) {
+        input.value = "";
+        showUploadStatus(`✅ Playlist "${data.playlist.name}" created!`, "#16a34a");
+        loadPlaylists();
+    }
+}
+
+async function loadPlaylists() {
+    const res = await fetch("/playlist/all");
+    const data = await res.json();
+    renderPlaylists(data.playlists || []);
+}
+
+function renderPlaylists(playlists) {
+    const container = document.getElementById("playlist-list");
+    if (playlists.length === 0) {
+        container.innerHTML = `<p style="color:#aaa; font-size:13px;">No playlists yet — create one above!</p>`;
+        return;
+    }
+    container.innerHTML = playlists.map(p => `
+        <div style="background:#f8f7ff; border-radius:12px; padding:12px 15px;
+                    margin-bottom:8px; border: 2px solid #ede9fe;
+                    display:flex; align-items:center; justify-content:space-between;">
+            <div>
+                <p style="font-weight:600; color:#333; margin:0;">📋 ${escapeHtml(p.name)}</p>
+                <p style="font-size:11px; color:#aaa; margin:0;">${p.song_count} songs · ${p.created_at}</p>
+            </div>
+            <button onclick="viewPlaylist(${p.id}, '${escapeHtml(p.name)}')"
+                    style="background:#ede9fe; color:#667eea; border:none;
+                           padding: 6px 12px; border-radius:8px;
+                           cursor:pointer; font-size:13px; font-weight:600;">
+                👁 View
+            </button>
+            <button onclick="deletePlaylist(${p.id}, '${escapeHtml(p.name)}')"
+                    style="background:#fee2e2; color:#dc3545; border:none;
+                           width:34px; height:34px; border-radius:50%;
+                           cursor:pointer; font-size:15px;">
+                🗑
+            </button>
+            
+        </div>`).join("");
+}
+async function deletePlaylist(id, name) {
+    if (!confirm(`Delete playlist "${name}"?`)) return;
+    const res = await fetch(`/playlist/${id}/delete`, { method: "DELETE" });
+    const data = await res.json();
+    if (data.success) {
+        showUploadStatus(`🗑 Playlist deleted!`, "#dc3545");
+        loadPlaylists();
+    }
+}
+
+async function showAddToPlaylist(songId) {
+    const res = await fetch("/playlist/all");
+    const data = await res.json();
+    const playlists = data.playlists || [];
+
+    if (playlists.length === 0) {
+        alert("No playlists yet! Create one first.");
+        return;
+    }
+
+    // Build a simple choice for user
+    let message = "Choose playlist number:\n\n";
+    playlists.forEach((p, i) => {
+        message += `${i + 1}. ${p.name}\n`;
+    });
+
+    const choice = prompt(message);
+    if (!choice) return;
+
+    const index = parseInt(choice) - 1;
+    if (index < 0 || index >= playlists.length) {
+        alert("Invalid choice!");
+        return;
+    }
+
+    const selectedPlaylist = playlists[index];
+    const res2 = await fetch(`/playlist/${selectedPlaylist.id}/add-song`, {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({ song_id: songId })
+    });
+    const data2 = await res2.json();
+    if (data2.success) {
+        showUploadStatus(`✅ ${data2.message}`, "#16a34a");
+        loadPlaylists();
+    }
+}
+
+// ── Share Function ─────────────────────────────────────────────────────
+async function shareSong(title) {
+    const shareText = `🎵 Listen to "${title}" on Mood Music!`;
+    const shareUrl = window.location.href;
+
+    if (navigator.share) {
+        try {
+            await navigator.share({ title: "Mood Music 🎵", text: shareText, url: shareUrl });
+            return;
+        } catch (e) {}
+    }
+
+    try {
+        await navigator.clipboard.writeText(`${shareText}\n${shareUrl}`);
+        showUploadStatus("✅ Link copied to clipboard! Paste it anywhere.", "#16a34a");
+    } catch (e) {
+        const whatsapp = `https://wa.me/?text=${encodeURIComponent(shareText + " " + shareUrl)}`;
+        window.open(whatsapp, "_blank");
+    }
+}
+
+async function viewPlaylist(id, name) {
+    const res = await fetch(`/playlist/${id}/songs`);
+    const data = await res.json();
+    const songs = data.songs || [];
+
+    if (songs.length === 0) {
+        alert(`Playlist "${name}" is empty!`);
+        return;
+    }
+
+    // Load playlist songs into the main player (with liked status from server)
+    playlist = songs;
+    currentIndex = -1;
+    renderSongList();
+
+    document.getElementById("song-list").scrollIntoView({ behavior: "smooth" });
+    showUploadStatus(`🎵 Now showing playlist: "${name}" — click any song to play!`, "#667eea");
+}
+</script>
+{% endif %}
+{% endblock %}

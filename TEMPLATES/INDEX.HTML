@@ -68,3 +68,74 @@
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Mood Music Recommender</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    
+    <!-- FLOATING EMOJIS BACKGROUND -->
+    <div class="floating-emojis">
+        <div class="emoji-float">🎵</div>
+        <div class="emoji-float">😊</div>
+        <div class="emoji-float">🎧</div>
+        <div class="emoji-float">🎶</div>
+        <div class="emoji-float">😢</div>
+        <div class="emoji-float">😠</div>
+         <div class="emoji-float">❤️</div>
+        <div class="emoji-float">🎵</div>
+        <div class="emoji-float">🎤</div>
+            <div class="emoji-float">🤍</div>
+
+    </div>
+
+    <div class="container">
+        <div class="emoji">🎵</div>
+        <h1>Mood Music Recommender</h1>
+        
+        <!-- MOOD SECTION -->
+        <p style="color: #666; margin-bottom: 20px; font-size: 14px;">Tell us how you're feeling!</p>
+        <form action="/recommend" method="POST">
+            <input type="text" name="mood" placeholder="😊 happy, 😢 sad, or 😠 angry" required>
+            <br>
+            <button type="submit">🎧 Get Songs</button>
+        </form>
+        
+        <!-- DIVIDER -->
+        <div style="margin: 40px 0; border-top: 2px solid #ddd;"></div>
+        
+        <!-- SEARCH SECTION -->
+        <h3 style="color: #667eea; margin-bottom: 15px;">🔍 Or Search for a Song</h3>
+        <input type="text" id="search-box" placeholder="Type song name or artist..." style="margin-bottom: 10px;">
+        <div id="search-results"></div>
+
+        <!-- DIVIDER -->
+        <div style="margin: 40px 0; border-top: 2px solid #ddd;"></div>
+        
+        <!-- WEBCAM SECTION -->
+        <h3 style="color: #667eea; margin-bottom: 15px;">📸 Or Use Webcam to Detect Mood</h3>
+        <button id="start-webcam-btn" type="button">Start Webcam</button>
+        
+        <div id="webcam-container" style="display: none; margin-top: 20px;">
+            <video id="webcam" autoplay playsinline style="width: 100%; max-width: 400px; border-radius: 15px; border: 3px solid #667eea;"></video>
+            <br><br>
+            <button id="capture-btn" type="button">📸 Capture & Detect Emotion</button>
+            <button id="stop-webcam-btn" type="button" style="background: #dc3545;">Stop Webcam</button>
+        </div>
+        
+        <canvas id="canvas" style="display: none;"></canvas>
+        
+        <div id="emotion-result" style="margin-top: 20px;"></div>
+
+        <!-- TRENDING ARTISTS LINK -->
+        <div style="text-align: center; margin-top: 25px;">
+            <a href="/trending" class="trending-btn">🔥 Trending Artists</a>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
