@@ -343,37 +343,7 @@ def get_catalog_songs():
         })
     result.sort(key=lambda x: x["title"].lower())
     return jsonify({"songs": result})
-@app.route("/neutral-songs")
-@login_required
-def neutral_songs_page():
-    return render_template("neutral_songs.html")
 
-
-@app.route("/api/catalog-songs")
-@login_required
-def get_catalog_songs():
-    result = []
-    for entry in CATALOG_SONGS:
-        playable = False
-        song_db_id = None
-        if entry["filename"]:
-            filepath = os.path.join(DEFAULT_SONGS_FOLDER, entry["filename"])
-            if os.path.exists(filepath):
-                song = Song.query.filter_by(
-                    user_id=current_user.id,
-                    filename=entry["filename"]
-                ).first()
-                if song:
-                    playable = True
-                    song_db_id = song.id
-        result.append({
-            "title": entry["title"],
-            "artist": entry["artist"],
-            "playable": playable,
-            "song_id": song_db_id,
-        })
-    result.sort(key=lambda x: x["title"].lower())
-    return jsonify({"songs": result})
 
 # ==================== MUSIC ROUTES ====================
 
