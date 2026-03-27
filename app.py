@@ -481,7 +481,7 @@ def get_liked_songs():
 # ==================== ORIGINAL MUSIC ROUTES ====================
 @app.route("/recommend", methods=["POST"])
 def recommend():
-    mood = request.form["mood"].lower()
+    mood = request.form.get("mood", "").lower()
 
     if mood == "happy":
         songs = [
