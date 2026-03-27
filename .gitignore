@@ -8,3 +8,6 @@ temp_face.jpg
 temp_warmup.jpg
 .deepface/
 .cache/
+# Too large for GitHub (100MB file limit)
+default_songs/Best of Shreya Ghoshal Songs _ Tum Kya Mile _ Jaadu Hai Nasha _ Ve Kamleya _ Non-Stop Playlist.mp3
+default_songs/Lata Mangeshkar and Kishore Kumar Hits _ Tere Bina Zindagi Se _ Dekha Ek Khwab _ Old Hindi Songs.mp3
