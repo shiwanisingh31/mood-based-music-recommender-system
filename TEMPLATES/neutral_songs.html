@@ -175,7 +175,8 @@
 
   async function loadCatalog() {
     try {
-      fetch('/api/catalog-songs')
+      const res = await fetch('/api/catalog-songs');
+      if (!res.ok) throw new Error(`Request failed: ${res.status}`);
       const data = await res.json();
       allSongs = data.songs || [];
       applyFilter();
