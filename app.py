@@ -351,15 +351,29 @@ def get_catalog_songs():
         .all()
     )
     default_by_filename = {s.filename: s for s in default_song_rows}
+    def _norm(s: str) -> str:
+        return "".join(ch.lower() for ch in (s or "") if ch.isalnum())
+
+    # Build a quick lookup so catalog titles can match real mp3s.
+    default_by_norm_title = {}
+    for s in default_song_rows:
+        n = _norm(s.title)
+        if n and n not in default_by_norm_title:
+            default_by_norm_title[n] = s
+        # also allow matching on filename (often contains title words)
+        fn = _norm(os.path.splitext(s.filename)[0])
+        if fn and fn not in default_by_norm_title:
+            default_by_norm_title[fn] = s
     result = []
     for entry in CATALOG_SONGS:
         playable = False
         song_db_id = None
         chosen_filename = entry["filename"]
-        if not chosen_filename and default_song_rows:
-            # Deterministic fallback so each catalog title gets a stable song mapping.
-            idx = sum(ord(ch) for ch in entry["title"]) % len(default_song_rows)
-            chosen_filename = default_song_rows[idx].filename
+        if not chosen_filename:
+            # Try to match catalog entry title to a real mp3 in default_songs.
+            match = default_by_norm_title.get(_norm(entry["title"]))
+            if match:
+                chosen_filename = match.filename
 
         if chosen_filename:
             filepath = os.path.join(DEFAULT_SONGS_FOLDER, chosen_filename)
