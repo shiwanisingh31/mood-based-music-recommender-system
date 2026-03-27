@@ -615,8 +615,27 @@ def detect_emotion():
         temp_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "temp_face.jpg")
         cv2.imwrite(temp_path, img)
 
+        fallback_songs = [
+            "Happy - Pharrell Williams",
+            "Good Vibrations - The Beach Boys",
+            "Don't Stop Me Now - Queen",
+            "Walking on Sunshine - Katrina",
+            "I Gotta Feeling - Black Eyed Peas",
+        ]
+
         try:
-            from deepface import DeepFace
+            try:
+                from deepface import DeepFace
+            except Exception as model_import_error:
+                app.logger.exception("DeepFace import failed: %s", model_import_error)
+                return jsonify(
+                    {
+                        "emotion": "neutral",
+                        "mood": "happy",
+                        "songs": fallback_songs,
+                        "warning": "Emotion AI model unavailable on server. Showing fallback recommendations.",
+                    }
+                )
 
             try:
                 result = DeepFace.analyze(
