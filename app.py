@@ -596,11 +596,10 @@ def detect_emotion():
     import numpy as np
 
     try:
-        # On lightweight cloud instances (like Render free tier), DeepFace/TensorFlow
-        # can timeout or get OOM-killed. Use fast fallback unless explicitly disabled.
-        force_fallback = os.environ.get("FORCE_EMOTION_FALLBACK", "").lower() in ("1", "true", "yes")
-        if os.environ.get("RENDER") == "true" and not force_fallback:
-            force_fallback = True
+        # Default to fallback in production/cloud. Enable heavy DeepFace path only
+        # when explicitly requested via ENABLE_DEEPFACE=1.
+        enable_deepface = os.environ.get("ENABLE_DEEPFACE", "").lower() in ("1", "true", "yes")
+        force_fallback = not enable_deepface
 
         fallback_songs = [
             "Happy - Pharrell Williams",
