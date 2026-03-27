@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify, redirect, url_for, flash, send_from_directory
+from flask import Flask, render_template, render_template_string, request, jsonify, redirect, url_for, flash, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import (
     LoginManager,
@@ -10,6 +10,7 @@ from flask_login import (
 )
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
+from markupsafe import escape
 from datetime import datetime
 import os
 import random
@@ -542,7 +543,28 @@ def recommend():
     else:
         songs = ["Please enter: happy, sad, or angry"]
 
-    return render_template("results.html", mood=mood, songs=songs)
+    try:
+        return render_template("results.html", mood=mood, songs=songs)
+    except Exception as e:
+        app.logger.exception("Failed to render results template: %s", e)
+        safe_mood = escape(mood or "unknown")
+        items = "".join(f"<li>{escape(song)}</li>" for song in songs)
+        return render_template_string(
+            """
+            <!DOCTYPE html>
+            <html>
+            <head><title>Recommended Songs</title></head>
+            <body style="font-family: Arial, sans-serif; margin: 24px;">
+              <h2>You're feeling: {{ mood }}</h2>
+              <h3>Recommended Songs</h3>
+              <ul>{{ items|safe }}</ul>
+              <a href="/dashboard">Back to Dashboard</a>
+            </body>
+            </html>
+            """,
+            mood=safe_mood,
+            items=items,
+        )
 
 
 def _preload_deepface():
