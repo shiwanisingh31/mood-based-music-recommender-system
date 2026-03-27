@@ -321,6 +321,8 @@ def neutral_songs_page():
 @app.route("/api/catalog-songs")
 @login_required
 def get_catalog_songs():
+    # Ensure users created before/without seeding still get default playable songs.
+    seed_default_songs(current_user.id)
     result = []
     for entry in CATALOG_SONGS:
         playable = False
