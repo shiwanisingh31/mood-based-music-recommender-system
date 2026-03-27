@@ -175,7 +175,7 @@
 
   async function loadCatalog() {
     try {
-      const res = await fetch('/api/catalog-songs');
+      const res = await fetch('/api/library-songs');
       if (!res.ok) throw new Error(`Request failed: ${res.status}`);
       const data = await res.json();
       allSongs = data.songs || [];

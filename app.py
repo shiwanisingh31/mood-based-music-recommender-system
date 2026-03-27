@@ -392,6 +392,38 @@ def get_catalog_songs():
     return jsonify({"songs": result})
 
 
+@app.route("/api/library-songs")
+@login_required
+def get_library_songs():
+    # Ensure default_songs are seeded into this user's DB.
+    seed_default_songs(current_user.id)
+
+    songs = (
+        Song.query.filter_by(user_id=current_user.id)
+        .order_by(Song.title.asc())
+        .all()
+    )
+
+    result = []
+    for s in songs:
+        title = s.title or "Unknown"
+        # Try to infer artist from common "Artist - Title" patterns in filename/title.
+        artist = "Local Library"
+        if " - " in title:
+            left, right = title.split(" - ", 1)
+            if left.strip() and right.strip():
+                artist = left.strip()
+                title = right.strip()
+        result.append(
+            {
+                "title": title,
+                "artist": artist,
+                "playable": True,
+                "song_id": s.id,
+            }
+        )
+    return jsonify({"songs": result})
+
 # ==================== MUSIC ROUTES ====================
 
 @app.route("/music/upload", methods=["POST"])
