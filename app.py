@@ -119,6 +119,27 @@ def seed_default_songs(user_id):
                 is_default=True
             )
             db.session.add(song)
+
+    # Also seed every playable file in default_songs so the catalog can map
+    # more entries to real audio files on deployed environments.
+    for filename in os.listdir(DEFAULT_SONGS_FOLDER):
+        filepath = os.path.join(DEFAULT_SONGS_FOLDER, filename)
+        if not os.path.isfile(filepath):
+            continue
+        if not allowed_file(filename):
+            continue
+        already_exists = Song.query.filter_by(user_id=user_id, filename=filename).first()
+        if already_exists:
+            continue
+        clean_title = os.path.splitext(filename)[0].replace("_", " ").replace("-", " ")
+        db.session.add(
+            Song(
+                title=clean_title,
+                filename=filename,
+                user_id=user_id,
+                is_default=True,
+            )
+        )
     db.session.commit()
 
 # Initialize database
@@ -323,17 +344,26 @@ def neutral_songs_page():
 def get_catalog_songs():
     # Ensure users created before/without seeding still get default playable songs.
     seed_default_songs(current_user.id)
+    default_song_rows = (
+        Song.query.filter_by(user_id=current_user.id, is_default=True)
+        .order_by(Song.filename.asc())
+        .all()
+    )
+    default_by_filename = {s.filename: s for s in default_song_rows}
     result = []
     for entry in CATALOG_SONGS:
         playable = False
         song_db_id = None
-        if entry["filename"]:
-            filepath = os.path.join(DEFAULT_SONGS_FOLDER, entry["filename"])
+        chosen_filename = entry["filename"]
+        if not chosen_filename and default_song_rows:
+            # Deterministic fallback so each catalog title gets a stable song mapping.
+            idx = sum(ord(ch) for ch in entry["title"]) % len(default_song_rows)
+            chosen_filename = default_song_rows[idx].filename
+
+        if chosen_filename:
+            filepath = os.path.join(DEFAULT_SONGS_FOLDER, chosen_filename)
             if os.path.exists(filepath):
-                song = Song.query.filter_by(
-                    user_id=current_user.id,
-                    filename=entry["filename"]
-                ).first()
+                song = default_by_filename.get(chosen_filename)
                 if song:
                     playable = True
                     song_db_id = song.id
